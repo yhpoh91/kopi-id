@@ -8,8 +8,7 @@
     "/README.md"
   ],
   "scripts": {
-    "start": "NODE_ENV=production node demoIndex.js",
-    "dev": "NODE_ENV=development babel-node demoIndex.js",
+    "start": "NODE_ENV=development babel-node example/index.js",
     "build": "rm -rf dist && mkdir dist && babel src -D -d dist",
     "test": "mocha \"./{,!(node_modules)/**/}*.test.js\" --require esm"
   },
