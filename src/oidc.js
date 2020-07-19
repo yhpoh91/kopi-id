@@ -1,10 +1,12 @@
 import { v4 as uuid } from 'uuid';
 
+import Constants from './constants';
 import ExpressRouter from './router';
+
+import AuthService from './services/auth';
 import JwtService from './services/jwt';
 import TokenService from './services/token';
 
-import Constants from './constants';
 import authorizationCodeService from './services/authorizationCode';
 import loggerService from './services/logger';
 import redirectService from './services/redirect';
@@ -130,38 +132,13 @@ export default (configuration = {}) => {
     return Promise.resolve();
   };
 
-  const onRevokeConsentGiven = async (sub, scope, clientId) => {
-    const clientConsents = consents[clientId];
-    if (clientConsents == null) {
-      // client does not belong in given consent, nothing to revoke
-      return Promise.resolve();
-    }
-
-    for (let i = 0; i < scope.length; i += 1) {
-      const scopeItem = scope[i];
-
-      const scopeConsents = clientConsents[scopeItem];
-      if (scopeConsents == null) {
-        // scope does not belong in client, nothing to revoke
-        continue;
-      }
-
-      // delete sub from scope consent
-      delete scopeConsents[sub];
-    }
-
-    return Promise.resolve();
-  };
-
   const onSaveAuthenticationRequest = async (authenticationRequest) => {
     const authenticationRequestId = uuid();
     authenticationRequests[authenticationRequestId] = authenticationRequest;
-    console.log(authenticationRequests);
     return Promise.resolve(authenticationRequestId);
   };
 
   const onLoadAuthenticationRequest = async (authenticationRequestId) => {
-    console.log(authenticationRequests);
     return Promise.resolve(authenticationRequests[authenticationRequestId]);
   };
 
@@ -192,7 +169,7 @@ export default (configuration = {}) => {
 
   const onLoadAuthorization = async (code) => {
     const authorizationRequest = authorizationCodes[code];
-    if (data == null) {
+    if (authorizationRequest == null) {
       return Promise.resolve(null);
     }
 
@@ -213,157 +190,6 @@ export default (configuration = {}) => {
 
     // Return whether deleted (if previously doesn't exist, return false as no deletion happened)
     return Promise.resolve(existed);
-  };
-
-  const handleAuthenticated = async (res, authenticationRequestId, sub, isUserAuthenticated, isSilentAuthenticated) => {
-    try {
-      const authenticationRequest = await onLoadAuthenticationRequest(authenticationRequestId);
-      console.log(authenticationRequest)
-      const {
-        scope,
-        client_id: clientId,
-        id_token_hint: idTokenHint,
-        redirect_uri: redirectUri,
-        prompt,
-        state,
-      } = authenticationRequest;
-
-      // Validate authenticated status
-      if (!isUserAuthenticated) {
-        // Send Redirect with Error (login_required)
-        return redirectService.redirectLoginRequired(res, redirectUri, state);
-      }
-
-      // Validate Re-login when LOGIN is present
-      if (isSilentAuthenticated && prompt && prompt.includes(Constants.authenticationRequest.prompt.LOGIN)) {
-        // Send Redirect with Error (login_required)
-        return redirectService.redirectLoginRequired(res, redirectUri, state);
-      }
-
-      // Validate ID Token (must not allow login with a different user)
-      const client = await onGetClient(clientId);
-      if (idTokenHint != null) {
-        // Check if different user (sub)
-        try {
-          const idToken = await jwtService.verifyIdToken(idTokenHint, client);
-          const { sub: tokenSub } = idToken;
-          if (sub !== tokenSub) {
-            // Send Redirect with Error (login_required)
-            return redirectService.redirectLoginRequired(res, redirectUri, state, 'user logged in as different id from the id_token');
-          }
-        } catch (error) {
-          L.warn(`Error caught when verifying ID Token: ${error.message}`);
-
-          // Send Redirect with Error (invalid_request)
-          return redirectService.redirectInvalidRequest(res, redirectUri, state, 'invalid id_token');
-        }
-      }
-
-      // Create new Authorization Request
-      const authorizationRequestId = await onSaveAuthorizationRequest(authenticationRequestId, sub);
-
-      // Generate Consent Url
-      const consentUrl = `${config.host}/${config.consentPage}?authorizationRequestId=${authorizationRequestId}`;
-
-      // Check CONSENT prompt
-      if (prompt && prompt.includes(Constants.authenticationRequest.prompt.CONSENT)) {
-        // Must show consent page, redirect to consent page
-        res.redirect(consentUrl);
-        return;
-      }
-
-      // Check previously given consent (optional)
-      const isConsentGiven = await onIsConsentGiven(sub, scope, clientId);
-      if (isConsentGiven) {
-        return handleAuthorized(res, authorizationRequestId, true, true);
-      }
-  
-      // Redirect to consent page
-      res.redirect(consentUrl);
-    } catch (error) {
-      L.error(error.message, error);
-      res.status(500).send();
-    }
-  };
-
-  const handleAuthorized = async (res, authorizationRequestId, isConsentGiven, isSilentConsent) => {
-    try {
-      const authorizationRequest = await onLoadAuthorizationRequest(authorizationRequestId);
-      const { authenticationRequestId, sub } = authorizationRequest;
-
-      const authenticationRequest = await onLoadAuthenticationRequest(authenticationRequestId);
-      const {
-        auth_time: authTime,
-        response_type: responseTypes,
-        scope,
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        prompt,
-        state,
-        nonce,
-      } = authenticationRequest;
-
-      const client = await onGetClient(clientId);
-  
-      if (!isConsentGiven) {
-        // Send Redirect with Error (consent_required)
-        return redirectService.redirectConsentRequired(res, redirectUri, state);
-      }
-
-      if (isSilentConsent && prompt && prompt.includes(Constants.authenticationRequest.prompt.CONSENT)) {
-        // Send Redirect with Error (consent_required)
-        return redirectService.redirectConsentRequired(res, redirectUri, state);
-      }
-  
-      // Flow
-      const flowType = flowUtils.getFlowType(responseTypes);
-
-      const hasCode = responseTypes && responseTypes.includes(Constants.authenticationRequest.responseTypes.CODE);
-      const hasIdToken = responseTypes && responseTypes.includes(Constants.authenticationRequest.responseTypes.ID_TOKEN);
-      const hasAccessToken = responseTypes && responseTypes.includes(Constants.authenticationRequest.responseTypes.TOKEN);
-
-      let cHash = null;
-      let atHash = null;
-
-      let query = (state && state !== '') ? `&state=${encodeURIComponent(state)}` : '';
-      if (hasCode) {
-        // Generate Authorization Code
-        const authorizationCode = await onSaveAuthorization(authenticationRequestId, sub);
-
-        // Hash Authorization Code
-        const buffer = hashService.hash(authorizationCode, config.hashAlgorithm);
-        cHash = buffer.slice(0, buffer.length / 2)
-          .toString('base64');
-
-        query += `&code=${encodeURIComponent(authorizationCode)}`;
-      }
-      if (hasAccessToken) {
-        // Generate Access Token
-        const accessToken = await tokenService.generateToken(client, sub, scope, authTime, nonce, cHash);
-
-        // Hash Access Token
-        const buffer = hashService.hash(accessToken, config.hashAlgorithm);
-        atHash = buffer.slice(0, buffer.length / 2)
-          .toString('base64');
-
-        query += `&access_token=${encodeURIComponent(accessToken)}`;
-        query += `&expires_in=${encodeURIComponent(config.accessTokenExpiresIn)}`;
-        query += `&token_type=Bearer`;
-      }
-      if (hasIdToken) {
-        // Generate ID Token
-        const idToken = await tokenService.generateIdToken(client, sub, authTime, nonce, cHash, atHash);
-        query += `&id_token=${encodeURIComponent(idToken)}`;
-      }
-  
-      // Redirect to client redirect page
-      query = query.charAt(0) === '&' ? query.slice(1) : query;
-      const clientUrl = `${redirectUri}#${query}`
-      res.redirect(clientUrl);
-    } catch (error) {
-      L.error(error.message, error);
-      res.status(500).send();
-    }
   };
 
   const defaultConfig = {
@@ -388,11 +214,14 @@ export default (configuration = {}) => {
     // Managed Consent
     onIsConsentGiven,
     onSetConsentGiven,
-    onRevokeConsentGiven,
 
     // Authentication Request
     onSaveAuthenticationRequest,
     onLoadAuthenticationRequest,
+
+    // Authorization Request
+    onSaveAuthorizationRequest,
+    onLoadAuthorizationRequest,
 
     // Authorization
     onSaveAuthorization,
@@ -401,11 +230,16 @@ export default (configuration = {}) => {
   };
 
   config = Object.assign({}, defaultConfig, configuration);
+
+  const expressRouter = ExpressRouter(config);
+
+  const authService = AuthService(config);
   const jwtService = JwtService(config);
   const tokenService = TokenService(config, jwtService);
   return {
-    express: ExpressRouter(config),
-    handleAuthenticated,
-    handleAuthorized,
+    express: expressRouter,
+
+    handleAuthenticated: authService.handleAuthenticated,
+    handleAuthorized: authService.handleAuthorized,
   };
 };

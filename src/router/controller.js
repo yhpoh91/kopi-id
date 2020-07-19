@@ -1,4 +1,6 @@
 import Constants from '../constants';
+
+import AuthService from '../services/auth';
 import JwtService from '../services/jwt';
 
 import loggerService from '../services/logger';
@@ -7,6 +9,7 @@ import redirectService from '../services/redirect';
 
 export default (oidcConfig) => {
   const { L } = loggerService('Controller');
+  const authService = AuthService(oidcConfig);
   const jwtService = JwtService(oidcConfig);
 
   const handleAuthenticationRequest = async (authenticationRequest, req, res, next) => {
@@ -55,7 +58,7 @@ export default (oidcConfig) => {
           try {
             const idToken = await jwtService.verifyIdToken(idTokenHint, client);
             const { sub } = idToken;
-            return oidcConfig.handleAuthenticated(res, authenticationRequestId, sub, true, true);
+            return authService.handleAuthenticated(res, authenticationRequestId, sub, true, true);
           } catch (error) {
             L.warn(`Error caught when verifying ID Token: ${error.message}`);
 
@@ -75,7 +78,6 @@ export default (oidcConfig) => {
   
   const handleTokenRequest = async (tokenRequest, req, res, next) => {
     try {
-      console.log(authenticationRequest);
       // TODO: Validate Client ID against Client Secret
       // TODO: Validate Code is valid (not null)
       // TODO: Validate Code against Client ID
@@ -99,16 +101,30 @@ export default (oidcConfig) => {
       res.status(400).json({ error: error.message || 'invalid_request' });
     }
   };
+
+  const handleUserInfo = async (req, res, next) => {
+    try {
+      res.send();
+    } catch (error) {
+      next(error);
+    }
+  };
   
   const authenticationRequestGet = (req, res, next) => handleAuthenticationRequest(req.query, req, res, next);
   const authenticationRequestPost = (req, res, next) => handleAuthenticationRequest(req.body, req, res, next);
   
   const tokenRequestPost = (req, res, next) => handleTokenRequest(req.body, req, res, next);
+
+  const userInfoGet = (req, res, next) => handleUserInfo(req, res, next);
+  const userInfoPost = (req, res, next) => handleUserInfo(req, res, next);
   
   return {
     authenticationRequestGet,
     authenticationRequestPost,
   
     tokenRequestPost,
+
+    userInfoGet,
+    userInfoPost,
   };  
 };

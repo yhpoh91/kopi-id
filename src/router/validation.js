@@ -61,6 +61,7 @@ export default {
       id_token_hint: Joi.string().optional(),
       login_hint: Joi.string().optional(),
       acr_values: CustomJoi.spaceArray().items(Joi.string()).optional(),
+      claims_locales: CustomJoi.spaceArray().items(Joi.string()).optional(),
     },
     params: {},
     body: {},
@@ -109,6 +110,10 @@ export default {
       acr_values: Joi.alternatives([
         CustomJoi.spaceArray().items(Joi.string()),
         Joi.array().items(Joi.string()),
+      ]).optional(),
+      claims_locales: Joi.alternatives([
+        CustomJoi.spaceArray().items(Joi.string()),
+        Joi.array().items(Joi.string())
       ]).optional(),
     },
   },
