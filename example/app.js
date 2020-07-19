@@ -10,8 +10,7 @@ const environment = process.env.NODE_ENV || 'development';
 const listenIp = '0.0.0.0';
 const listenPort = process.env.PORT || 8080;
 
-// Application
-const app = express();
+// OpenID Connect
 const oidc = Oidc({
   host: 'http://localhost:8080',
   loginPage: 'login.html',
@@ -22,6 +21,9 @@ const oidc = Oidc({
   authorizationCodeLength: 256,
 });
 
+// Application
+const app = express();
+
 app.set('trust proxy', true);
 app.set('view engine', 'jade');
 
@@ -30,18 +32,20 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-
-// Api Router
 app.use('/', express.static('example/public'));
 app.get('/sinkhole', (req, res) => res.json(req.query));
+
+// OpenID Routes
 app.use('/oidc', oidc.express);
 
+// Login API Route
 app.post('/login', (req, res) => {
   const { username, password, authenticationRequestId } = req.body;
   const isUserAuthenticated = (username === 'user' && password === 'pass');
   oidc.handleAuthenticated(res, authenticationRequestId, 'uid', isUserAuthenticated, false);
 });
 
+// Consent API Route
 app.post('/consent', (req, res) => {
   const { authorizationRequestId, isConsentGivenAllow } = req.body;
   oidc.handleAuthorized(res, authorizationRequestId, isConsentGivenAllow, false);
@@ -49,6 +53,4 @@ app.post('/consent', (req, res) => {
 
 // Server
 const httpServer = http.createServer(app);
-httpServer.listen(listenPort, listenIp, () => {
-  console.log(`Server (${environment}) listening on ${listenIp}:${listenPort}`);
-});
+httpServer.listen(listenPort, listenIp, () => console.log(`Server (${environment}) listening on ${listenIp}:${listenPort}`));
