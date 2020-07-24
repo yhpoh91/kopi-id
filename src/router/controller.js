@@ -24,6 +24,7 @@ export default (oidcConfig) => {
         id_token_hint: idTokenHint,
         prompt,
         state,
+        max_age: maxAge,
       } = authenticationRequest;
 
       // Validate Client
@@ -60,7 +61,14 @@ export default (oidcConfig) => {
           // Try to silently login with ID Token
           try {
             const idToken = await jwtService.verifyIdToken(idTokenHint, client);
-            const { sub } = idToken;
+            const { sub, auth_time: authTime } = idToken;
+
+            // Check Max Age
+            const currentTime = Math.floor(new Date().getTime() / 1000);
+            if (maxAge && currentTime > (authTime + maxAge)) {
+              throw new Error('Maximum Authentication Age has reached.');
+            }
+
             return authService.handleAuthenticated(res, authenticationRequestId, sub, true, true);
           } catch (error) {
             L.warn(`Error caught when verifying ID Token: ${error.message}`);
