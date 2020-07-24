@@ -82,7 +82,6 @@ export default (oidcConfig) => {
   const handleTokenRequest = async (tokenRequest, req, res, next) => {
     try {
       const { code, redirect_uri: redirectUri } = req.body;
-      console.log('meow');
 
       const { clientId } = req;
       const client = await oidcConfig.onGetClient(clientId);
@@ -159,7 +158,12 @@ export default (oidcConfig) => {
 
   const handleUserInfo = async (req, res, next) => {
     try {
-      res.send();
+      const { tokenPayload } = req;
+      const { sub, scope } = tokenPayload;
+
+      const user = await oidcConfig.onGetUserInfo(sub, scope);
+      user.sub = user.sub || user.id;
+      res.status(200).json(user);
     } catch (error) {
       next(error);
     }

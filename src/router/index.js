@@ -21,6 +21,11 @@ export default (oidcConfig) => {
     try {
       const authorizationHeader = req.headers['authorization'];
       const bearerPrefix = 'Bearer ';
+
+      if (authorizationHeader == null) {
+        res.status(401).send();
+        return;
+      }
   
       if (authorizationHeader.indexOf(bearerPrefix) !== 0) {
         res.status(401).send();

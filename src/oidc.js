@@ -152,7 +152,6 @@ export default (configuration = {}) => {
   };
 
   const onLoadAuthorizationRequest = async (authorizationRequestId) => {
-    console.log(authorizationRequests);
     return Promise.resolve(authorizationRequests[authorizationRequestId]);
   };
 
@@ -169,13 +168,7 @@ export default (configuration = {}) => {
   };
 
   const onLoadAuthorization = async (code) => {
-    const authorizationRequest = authorizationCodes[code];
-    if (authorizationRequest == null) {
-      return Promise.resolve(null);
-    }
-
-    // Return saved data if exists
-    return Promise.resolve(authorizationRequest);
+    return Promise.resolve(authorizationCodes[code]);
   };
 
   const onRevokeAuthorization = async (code) => {
