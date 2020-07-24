@@ -125,8 +125,6 @@ export default {
       grant_type: Joi.string().required(),
       code: Joi.string().required(),
       redirect_uri: Joi.string().required(),
-      client_id: Joi.string().required(),
-      client_secret: Joi.string().required(),
     },
   },
 };

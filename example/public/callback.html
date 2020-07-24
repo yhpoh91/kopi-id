@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>Redirect</title>
+  </head>
+
+
+  <body>
+    <div class="outer-container">
+      <div class="inner-container">
+        
+        <div class="content" id="content">
+        </div>
+
+        <script>
+          const getParams = () => {
+            const query = window.location.href.split('#', 2)[1] || '';
+            const components = query.split(/&/g);
+            const params = {};
+
+            for (let i = 0; i < components.length; i += 1) {
+              const component = components[i];
+              const sections = component.split(/=/g);
+              if (sections.length > 1) {
+                const key = decodeURIComponent(sections[0]);
+                const value = decodeURIComponent(sections[1]);
+                params[key] = value;
+              }
+            }
+
+            return params;
+          };
+          
+          const params = getParams();
+
+          const contentElement = document.getElementById('content');
+          for (let key in params) {
+            const value = params[key];
+
+            const element = document.createElement("div");
+            element.innerText = `${key}: ${value}`;
+
+            contentElement.appendChild(element);
+          }
+          
+        </script>
+      </div>
+    </div>
+  </body>
+</html>

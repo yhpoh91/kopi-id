@@ -54,7 +54,7 @@ export default (oidcConfig) => {
   router.route('/token')
     .post(
       clientAuthenticationService.checkClientAuthentication,
-      // validate(validator.tokenRequestPost),
+      validate(validator.tokenRequestPost),
       controller.tokenRequestPost,
     );
 

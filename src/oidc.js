@@ -28,13 +28,13 @@ export default (configuration = {}) => {
         name: 'Example Client',
         id: 'cid',
         secret: 'cs',
-        redirectUri: ['http://localhost:8080/sinkhole'],
+        redirectUri: ['http://localhost:8080/callback.html'],
       });
     }
     return Promise.resolve(null);
   };
 
-  const onGetUser = async (sub, scope) => {
+  const onGetUserInfo = async (sub, scope) => {
     if (sub === 'uid') {
       const user = { sub };
 
@@ -152,6 +152,7 @@ export default (configuration = {}) => {
   };
 
   const onLoadAuthorizationRequest = async (authorizationRequestId) => {
+    console.log(authorizationRequests);
     return Promise.resolve(authorizationRequests[authorizationRequestId]);
   };
 
@@ -210,7 +211,7 @@ export default (configuration = {}) => {
     onGetClient,
 
     // User
-    onGetUser,
+    onGetUserInfo,
 
     // Managed Consent
     onIsConsentGiven,

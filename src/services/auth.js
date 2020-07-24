@@ -127,7 +127,7 @@ export default (oidcConfig) => {
       let query = (state && state !== '') ? `&state=${encodeURIComponent(state)}` : '';
       if (hasCode) {
         // Generate Authorization Code
-        const authorizationCode = await oidcConfig.onSaveAuthorization(authenticationRequestId, sub);
+        const authorizationCode = await oidcConfig.onSaveAuthorization(authorizationRequestId, sub);
 
         // Hash Authorization Code
         const buffer = hashService.hash(authorizationCode, oidcConfig.hashAlgorithm);

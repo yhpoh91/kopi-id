@@ -2,7 +2,9 @@ import Constants from '../constants';
 
 import AuthService from '../services/auth';
 import JwtService from '../services/jwt';
+import TokenService from '../services/token';
 
+import hashService from '../services/hash';
 import loggerService from '../services/logger';
 import flowUtils from '../services/flowUtils';
 import redirectService from '../services/redirect';
@@ -11,6 +13,7 @@ export default (oidcConfig) => {
   const { L } = loggerService('Controller');
   const authService = AuthService(oidcConfig);
   const jwtService = JwtService(oidcConfig);
+  const tokenService = TokenService(oidcConfig, jwtService);
 
   const handleAuthenticationRequest = async (authenticationRequest, req, res, next) => {
     try {
@@ -78,42 +81,79 @@ export default (oidcConfig) => {
   
   const handleTokenRequest = async (tokenRequest, req, res, next) => {
     try {
-      // TODO: Validate Client ID against Client Secret
-      // TODO: Validate Code is valid (not null)
-      // TODO: Validate Code against Client ID
-      // TODO: Validate Code unused
-      // TODO: Validate Redirect URI against Authentication Request (if present)
-      // TODO: Validate Code against scope (must have openid)
+      const { code, redirect_uri: redirectUri } = req.body;
+      console.log('meow');
 
-      // TODO: ID Token should have at_hash
+      const { clientId } = req;
+      const client = await oidcConfig.onGetClient(clientId);
 
-      // Generate Access Token
-      // const accessToken = await tokenService.generateToken(client, sub, scope, authTime, nonce, cHash);
+      // Validate Code is valid (not null) and unused
+      const authorizationRequestId = await oidcConfig.onLoadAuthorization(code);
+      if (authorizationRequestId == null) {
+        throw new Error('Invalid Code');
+      }
 
-      // // Hash Access Token
-      // const buffer = hashService.hash(accessToken, oidcConfig.hashAlgorithm);
-      // atHash = buffer.slice(0, buffer.length / 2)
-      //   .toString('base64');
+      // Validate Code against Client ID
+      const authorizationRequest = await oidcConfig.onLoadAuthorizationRequest(authorizationRequestId);
+      const { sub, authenticationRequestId } = authorizationRequest;
+      const authenticationRequest = await oidcConfig.onLoadAuthenticationRequest(authenticationRequestId);
+      const {
+        scope,
+        client_id: requestClientId,
+        redirect_uri: requestRedirectUri,
+        auth_time: authTime,
+        nonce,
+      } = authenticationRequest;
+      if (clientId !== requestClientId) {
+        throw new Error('Client ID does not match requested authentication');
+      }
+      
+      // Validate Redirect URI against Authentication Request (if present)
+      if (redirectUri != null && redirectUri !== requestRedirectUri) {
+        throw new Error('Redirect URI does not match requested authentication');
+      }
 
-      // query += `&access_token=${encodeURIComponent(accessToken)}`;
-      // query += `&expires_in=${encodeURIComponent(oidcConfig.accessTokenExpiresIn)}`;
-      // query += `&token_type=Bearer`;
-      res.send(req.clientId);
-      return ;
+      // Validate Code against scope (must have openid)
+      if (!scope.includes('openid')) {
+        throw new Error('Scope did not include openid')
+      }
 
+
+      // Revoke Authorization Code
+      await oidcConfig.onRevokeAuthorization(code);
+
+      // Generate Access Token (should have c_hash)
+      const cHashBuffer = hashService.hash(code, oidcConfig.hashAlgorithm);
+      const cHash = cHashBuffer.slice(0, cHashBuffer.length / 2).toString('base64');
+      const accessToken = await tokenService.generateToken(client, sub, scope, authTime, nonce, cHash);
+
+      // Generate ID Token (should have at_hash)
+      const atHashBuffer = hashService.hash(accessToken, oidcConfig.hashAlgorithm);
+      const atHash = atHashBuffer.slice(0, atHashBuffer.length / 2).toString('base64');
+      const idToken = await tokenService.generateIdToken(client, sub, authTime, nonce, cHash, atHash);
+
+      const { accessTokenExpiresIn } = oidcConfig;
       const response = {
-        access_token: '',
+        access_token: accessToken,
         token_type: 'Bearer',
-        expires_in: 3600,
-        id_token: ''
+        expires_in: accessTokenExpiresIn,
+        id_token: idToken
+      }
+      if (res.headers == null) {
+        res.headers = {};
       }
       res.headers['Cache-Control'] = 'no-store';
       res.headers['Pragma'] = 'no-cache';
       res.status(200).json(response);
     } catch (error) {
+      L.error(error.message, error);
+
+      if (res.headers == null) {
+        res.headers = {};
+      }
       res.headers['Cache-Control'] = 'no-store';
       res.headers['Pragma'] = 'no-cache';
-      res.status(400).json({ error: error.message || 'invalid_request' });
+      res.status(400).json({ error: 'invalid_request' });
     }
   };
 
