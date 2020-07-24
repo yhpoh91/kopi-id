@@ -5,12 +5,17 @@ import Controller from './controller';
 import validator from './validation';
 
 import ValidationService from '../services/validate';
+import ClientAuthenticationService from '../services/clientAuth';
+
+import loggerService from '../services/logger';
 
 export default (oidcConfig) => {
   const router = express.Router({ mergeParams: true });
   const controller = Controller(oidcConfig);
 
   const validationService = ValidationService(oidcConfig);
+  const clientAuthenticationService = ClientAuthenticationService(oidcConfig, validationService);
+  const { L } = loggerService('Router');
 
   const checkAccessToken = async (req, res, next) => {
     try {
@@ -48,7 +53,8 @@ export default (oidcConfig) => {
   
   router.route('/token')
     .post(
-      validate(validator.tokenRequestPost),
+      clientAuthenticationService.checkClientAuthentication,
+      // validate(validator.tokenRequestPost),
       controller.tokenRequestPost,
     );
 

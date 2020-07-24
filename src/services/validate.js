@@ -40,9 +40,19 @@ export default (oidcConfig) => {
     }
   };
 
+  const validateClientSecretJwt = async (token) => {
+    try {
+      const payload = await jwtService.validateClientSecretJwt(token);
+      return Promise.resolve(payload.sub);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
+
   return {
     validateAuthorizationCode,
     validateIdToken,
     validateToken,
+    validateClientSecretJwt,
   };
 };

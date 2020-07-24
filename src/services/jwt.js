@@ -69,11 +69,42 @@ export default (oidcConfig) => {
     }
   };
 
+  const validateClientSecretJwt = async (token) => {
+    try {
+      // Decode without Verify
+      const payload = jsonwebtoken.decode(token);
+
+      // Get Client ID
+      const { sub: clientId } = payload;
+
+      // Get Client Secret
+      const client = await oidcConfig.onGetClient(clientId);
+
+      if (client == null) {
+        throw new Error('Client Not Found');
+      }
+
+      // Verify
+      const { secret: clientSecret } = client;
+      const options = {
+        issuer: clientId,
+        subject: clientId,
+        audience: host,
+      };
+      const verifiedPayload = jsonwebtoken.verify(token, clientSecret, options);
+      return Promise.resolve(verifiedPayload);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
+
   return {
     signIdToken,
     verifyIdToken,
 
     signToken,
     verifyToken,
+
+    validateClientSecretJwt,
   };
 };

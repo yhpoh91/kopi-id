@@ -98,6 +98,8 @@ export default (oidcConfig) => {
       // query += `&access_token=${encodeURIComponent(accessToken)}`;
       // query += `&expires_in=${encodeURIComponent(oidcConfig.accessTokenExpiresIn)}`;
       // query += `&token_type=Bearer`;
+      res.send(req.clientId);
+      return ;
 
       const response = {
         access_token: '',
