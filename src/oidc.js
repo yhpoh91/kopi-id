@@ -202,6 +202,7 @@ export default (configuration = {}) => {
     hashAlgorithm: 'sha512',
 
     idTokenExpiresIn: 3600,
+    accessTokenSecret: 'this_should_be_a_long_secret_that_nobody_should_know_including_the_developer',
     accessTokenExpiresIn: 3600,
     authorizationCodeLength: 256,
 

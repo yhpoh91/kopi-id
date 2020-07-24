@@ -86,6 +86,19 @@ export default (oidcConfig) => {
       // TODO: Validate Code against scope (must have openid)
 
       // TODO: ID Token should have at_hash
+
+      // Generate Access Token
+      // const accessToken = await tokenService.generateToken(client, sub, scope, authTime, nonce, cHash);
+
+      // // Hash Access Token
+      // const buffer = hashService.hash(accessToken, oidcConfig.hashAlgorithm);
+      // atHash = buffer.slice(0, buffer.length / 2)
+      //   .toString('base64');
+
+      // query += `&access_token=${encodeURIComponent(accessToken)}`;
+      // query += `&expires_in=${encodeURIComponent(oidcConfig.accessTokenExpiresIn)}`;
+      // query += `&token_type=Bearer`;
+
       const response = {
         access_token: '',
         token_type: 'Bearer',

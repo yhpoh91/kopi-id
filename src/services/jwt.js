@@ -39,7 +39,7 @@ export default (oidcConfig) => {
     }
   };
 
-  const signToken = async (payload, client) => {
+  const signToken = async (payload, client, accessTokenSecret) => {
     try {
       const options = {
         algorithm: jwtAlgorithm,
@@ -47,23 +47,22 @@ export default (oidcConfig) => {
         audience: client.id,
         issuer: host,
       };
-      const token = jsonwebtoken.sign(payload, client.secret, options);
+      const token = jsonwebtoken.sign(payload, accessTokenSecret, options);
       return Promise.resolve(token);
     } catch (error) {
       return Promise.reject(error);
     }
   };
 
-  const verifyToken = async (token, client) => {
+  const verifyToken = async (token, accessTokenSecret) => {
     try {
       const options = {
         algorithm: jwtAlgorithm,
         expiresIn: accessTokenExpiresIn,
-        audience: client.id,
         issuer: host,
       };
 
-      const payload = jsonwebtoken.verify(token, client.secret, options);
+      const payload = jsonwebtoken.verify(token, accessTokenSecret, options);
       return Promise.resolve(payload);
     } catch (error) {
       return Promise.reject(error);

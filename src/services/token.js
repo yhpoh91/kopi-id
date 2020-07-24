@@ -24,6 +24,7 @@ export default (oidcConfig, jwtService) => {
 
   const generateToken = async (client, sub, scope, authTime, nonce, cHash) => {
     try {
+      const { accessTokenSecret } = oidcConfig;
       const tokenPayload = { sub, scope };
       if (authTime) {
         tokenPayload.auth_time = authTime;
@@ -35,7 +36,7 @@ export default (oidcConfig, jwtService) => {
         tokenPayload.c_hash = cHash;
       }
       
-      const token = await jwtService.signToken(tokenPayload, client);
+      const token = await jwtService.signToken(tokenPayload, client, accessTokenSecret);
       return Promise.resolve(token);
     } catch (error) {
       return Promise.reject(error);

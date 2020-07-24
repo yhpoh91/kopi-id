@@ -31,9 +31,9 @@ export default (oidcConfig) => {
     }
   };
 
-  const validateToken = async (token, client) => {
+  const validateToken = async (token, accessTokenSecret) => {
     try {
-      const payload = await jwtService.verifyToken(token, client);
+      const payload = await jwtService.verifyToken(token, accessTokenSecret);
       return Promise.resolve(payload);
     } catch (error) {
       return Promise.reject(error);

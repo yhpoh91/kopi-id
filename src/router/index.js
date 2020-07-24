@@ -4,27 +4,37 @@ import validate from 'express-validation';
 import Controller from './controller';
 import validator from './validation';
 
+import ValidationService from '../services/validate';
+
 export default (oidcConfig) => {
   const router = express.Router({ mergeParams: true });
   const controller = Controller(oidcConfig);
 
-  const checkAccessToken = (req, res, next) => {
-    const authorizationHeader = req.headers['authorization'];
-    const bearerPrefix = 'Bearer ';
+  const validationService = ValidationService(oidcConfig);
 
-    if (authorizationHeader.indexOf(bearerPrefix) !== 0) {
-      res.status(401).send();
-      return;
+  const checkAccessToken = async (req, res, next) => {
+    try {
+      const authorizationHeader = req.headers['authorization'];
+      const bearerPrefix = 'Bearer ';
+  
+      if (authorizationHeader.indexOf(bearerPrefix) !== 0) {
+        res.status(401).send();
+        return;
+      }
+  
+      const accessToken = authorizationHeader.slice(bearerPrefix.length);
+      if (accessToken === '') {
+        res.status(401).send();
+        return;
+      }
+  
+      // Validate Access Token
+      req.tokenPayload = await validationService.validateToken(accessToken, oidcConfig.accessTokenSecret);
+      next();
+    } catch (error) {
+      next(error);
     }
-
-    const accessToken = authorizationHeader.slice(bearerPrefix.length);
-    if (accessToken === '') {
-      res.status(401).send();
-      return;
-    }
-
-    // TODO: Validate Access Token
-  }
+  };
 
   router.route('/authorize')
     .get(
