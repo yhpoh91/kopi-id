@@ -8,7 +8,7 @@ import loggerService from './logger';
 import redirectService from './redirect';
 
 export default (oidcConfig) => {
-  const { L } = loggerService('Auth Service');
+  const { L } = loggerService('Auth Service', oidcConfig.logLevel);
   const jwtService = JwtService(oidcConfig);
   const tokenService = TokenService(oidcConfig, jwtService);
 
@@ -77,7 +77,8 @@ export default (oidcConfig) => {
       // Redirect to consent page
       res.redirect(consentUrl);
     } catch (error) {
-      L.error(error.message, error);
+      L.error(error.message);
+      L.debug(error);
       res.status(500).send();
     }
   };
@@ -160,7 +161,8 @@ export default (oidcConfig) => {
       const clientUrl = `${redirectUri}#${query}`
       res.redirect(clientUrl);
     } catch (error) {
-      L.error(error.message, error);
+      L.error(error.message);
+      L.debug(error);
       res.status(500).send();
     }
   };

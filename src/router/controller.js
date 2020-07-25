@@ -153,7 +153,8 @@ export default (oidcConfig) => {
       res.headers['Pragma'] = 'no-cache';
       res.status(200).json(response);
     } catch (error) {
-      L.error(error.message, error);
+      L.error(error.message);
+      L.debug(error);
 
       if (res.headers == null) {
         res.headers = {};

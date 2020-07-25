@@ -8,6 +8,8 @@ export default (configuration = {}) => {
 
   const defaultConfig = {
     host: 'http://localhost:8080',
+    logLevel: 'info',
+    showResponseStack: false,
 
     loginPage: 'login',
     consentPage: 'consent',

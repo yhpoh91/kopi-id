@@ -3,7 +3,7 @@ import ValidationService from '../services/validate';
 import loggerService from '../services/logger';
 
 export default (oidcConfig, validationService) => {
-  const { L } = loggerService('Client Auth Service');
+  const { L } = loggerService('Client Auth Service', oidcConfig.logLevel);
 
   const authenticateClientSecretBasic = async (token) => {
     try {
@@ -80,7 +80,8 @@ export default (oidcConfig, validationService) => {
       req.clientId = clientId;
       next();
     } catch (error) {
-      L.error(error.message, error);
+      L.error(error.message);
+      L.debug(error);
       res.status(401).send();
     }
   };

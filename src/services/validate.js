@@ -4,7 +4,7 @@ import loggerService from './logger';
 import hashService from './hash';
 
 export default (oidcConfig) => {
-  const { L } = loggerService('Validation Service');
+  const { L } = loggerService('Validation Service', oidcConfig.logLevel);
   const jwtService = JwtService(oidcConfig);
 
   const validateAuthorizationCode = async (authorizationCode) => {
