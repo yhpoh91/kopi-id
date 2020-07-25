@@ -1,6 +1,6 @@
 {
   "name": "kopi-id",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple OIDC Library",
   "main": "index.js",
   "files": [
@@ -54,5 +54,9 @@
     "authN"
   ],
   "author": "Yee Hui Poh <yhpoh91@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yhpoh91/kopi-id"
+  }
 }
