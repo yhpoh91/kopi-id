@@ -1,2 +1,2 @@
-module.exports = require('./dist/express');
+module.exports = require('./dist/oidc');
 module.exports.default = module.exports;
