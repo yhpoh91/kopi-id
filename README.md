@@ -43,3 +43,6 @@ _Note: all endpoints follows the specification of Open ID Connect Core 1.0_
 
 
 Reference: https://openid.net/specs/openid-connect-core-1_0.html
+
+## Contributions
+Contributions to the Library are welcomed.
