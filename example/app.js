@@ -5,21 +5,14 @@ import http from 'http';
 import helmet from 'helmet';
 
 import Oidc from '../src/oidc';
+import oidcConfig from './config';
 
 const environment = process.env.NODE_ENV || 'development';
 const listenIp = '0.0.0.0';
 const listenPort = process.env.PORT || 8080;
 
 // OpenID Connect
-const oidc = Oidc({
-  host: 'http://localhost:8080',
-  loginPage: 'login.html',
-  consentPage: 'consent.html',
-
-  idTokenExpiresIn: 3600,
-  accessTokenExpiresIn: 3600,
-  authorizationCodeLength: 256,
-});
+const oidc = Oidc(oidcConfig);
 
 // Application
 const app = express();
