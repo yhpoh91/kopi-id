@@ -1,6 +1,6 @@
 {
   "name": "kopi-id",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Simple OIDC Library",
   "main": "index.js",
   "files": [
