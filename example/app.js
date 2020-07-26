@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 import http from 'http';
 import helmet from 'helmet';
 
-import Oidc from '../src/oidc';
+import Oidc from '../index';
 import oidcConfig from './config';
 
 const environment = process.env.NODE_ENV || 'development';
