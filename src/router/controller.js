@@ -80,7 +80,8 @@ export default (oidcConfig) => {
       }
 
       // Redirect to Login Page
-      const loginUrl = `${oidcConfig.host}/${oidcConfig.loginPage}?authenticationRequestId=${authenticationRequestId}`;
+      const loginPath = oidcConfig.loginUrl || `${oidcConfig.host}/${oidcConfig.loginPage}`;
+      const loginUrl = `${loginPath}?authenticationRequestId=${authenticationRequestId}`;
       res.redirect(loginUrl);
     } catch (error) {
       next(error);

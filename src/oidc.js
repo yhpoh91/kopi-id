@@ -14,6 +14,9 @@ export default (configuration = {}) => {
     loginPage: 'login',
     consentPage: 'consent',
 
+    loginUrl: null, // will use {{host}}/{{loginPage}} if null
+    consentUrl: null, // will use {{host}}/{{consentPage}} if null
+
     jwtAlgorithm: 'HS512',
     hashAlgorithm: 'sha512',
 

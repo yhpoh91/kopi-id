@@ -59,7 +59,8 @@ export default (oidcConfig) => {
       const authorizationRequestId = await oidcConfig.onSaveAuthorizationRequest(authenticationRequestId, sub);
 
       // Generate Consent Url
-      const consentUrl = `${oidcConfig.host}/${oidcConfig.consentPage}?authorizationRequestId=${authorizationRequestId}`;
+      const consentPath = oidcConfig.consentUrl || `${oidcConfig.host}/${oidcConfig.consentPage}`
+      const consentUrl = `${consentPath}?authorizationRequestId=${authorizationRequestId}`;
 
       // Check CONSENT prompt
       if (prompt && prompt.includes(Constants.authenticationRequest.prompt.CONSENT)) {

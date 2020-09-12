@@ -5,8 +5,11 @@ const config = {
   logLevel: 'debug',
   showResponseStack: true,
 
-  loginPage: 'login.html',
-  consentPage: 'consent.html',
+  //loginPage: 'login.html',
+  //consentPage: 'consent.html',
+
+  loginUrl: 'http://localhost:8080/login.html',
+  consentUrl: 'http://localhost:8080/consent.html',
 
   jwtAlgorithm: 'HS512',
   hashAlgorithm: 'sha512',
